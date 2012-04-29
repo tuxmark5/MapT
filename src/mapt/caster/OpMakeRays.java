@@ -15,7 +15,7 @@ public class OpMakeRays implements Operator<Mountain, Object>
   {
     this.numRays        = numRays;
     this.length         = length;
-    this.step           = 360.0 / (double) numRays;
+    this.step           = Math.PI * 2.0 / (double) numRays;
     this.geomFactory    = new GeometryFactory();
   }
   
@@ -23,15 +23,16 @@ public class OpMakeRays implements Operator<Mountain, Object>
   public Object apply(Mountain mountain)
   {
     double      angle   = 0.0;
-    Coordinate  coordA  = mountain.point.getCoordinate();
-    Coordinate  coordB;
+    RayPoint    coordA  = new RayPoint(RayPoint.Type.START, mountain.point.getCoordinate());
+    RayPoint    coordB; 
     LineString  ray;
     
-    mountain.rays = new Ray[numRays];
+    coordA.z            = (Double) mountain.point.getUserData();
+    mountain.rays       = new Ray[numRays];
     
     for (int i = 0; i < numRays; i++)
     {
-      coordB            = new Coordinate();
+      coordB            = new RayPoint(RayPoint.Type.END);
       coordB.x          = coordA.x + Math.cos(angle) * length;
       coordB.y          = coordA.y + Math.sin(angle) * length;
       ray               = geomFactory.createLineString(new Coordinate[] {coordA, coordB});

@@ -32,6 +32,7 @@ public class LayerTable extends JScrollPane implements ListSelectionListener
       {
         case 2: 
           m_mapContent.removeLayer(layer);
+          Util.dispose(layer);
           break;
           
         case 3:

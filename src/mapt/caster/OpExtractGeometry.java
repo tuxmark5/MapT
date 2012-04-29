@@ -1,6 +1,7 @@
 package mapt.caster;
 
 import com.vividsolutions.jts.geom.Geometry;
+import org.opengis.feature.Attribute;
 import org.opengis.feature.Feature;
 
 public class OpExtractGeometry implements Operator<Feature, Geometry>
@@ -23,7 +24,9 @@ public class OpExtractGeometry implements Operator<Feature, Geometry>
     
     if (prop != null)
     {
-      geom.setUserData(feature.getProperty(prop));
+      Attribute attr = (Attribute) feature.getProperty(prop);
+
+      geom.setUserData(attr.getValue());
     }
     
     return geom;

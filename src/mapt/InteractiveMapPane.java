@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapContent;
 
 public class InteractiveMapPane extends MapPane 
@@ -284,6 +285,9 @@ public class InteractiveMapPane extends MapPane
   
   public void zoomSelection()
   {
-    zoomMapArea(m_selector.getSelectionBounds());
+    ReferencedEnvelope bounds = m_selector.getSelectionBounds();
+    
+    bounds.expandBy(5.0);
+    zoomMapArea(bounds);
   }
 }

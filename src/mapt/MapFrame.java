@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import javax.swing.*;
+import mapt.caster.Cartographer;
+import mapt.caster.CartographerPanel;
+import mapt.caster.StyleGenerator;
 import net.infonode.docking.*;
 import net.infonode.docking.properties.DockingWindowProperties;
 import net.infonode.docking.properties.RootWindowProperties;
@@ -24,7 +27,6 @@ import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
-import org.geotools.styling.SLD;
 import org.geotools.styling.Style;
 import org.geotools.swing.data.JFileDataStoreChooser;
 
@@ -47,24 +49,28 @@ public class MapFrame extends JFrame
   }
   
   private MapContent                  m_mapContent;
+  private StyleGenerator              m_styleGen;
   
   private RootWindow                  m_rootWindow;
   
   private InteractiveMapPane          m_mapPane;
+  private CartographerPanel           m_cPanel;
   private LayerTable                  m_layerTable;
   private QueryPanel                  m_queryPanel;
   private JTable                      m_propertyTable;
   private JLabel                      m_statusBar;
  
-  public MapFrame(MapContent content)
+  public MapFrame(Cartographer cartographer, MapContent content)
   {
     m_mapContent      = content;
+    m_styleGen        = new StyleGenerator();
     
     m_mapPane         = new InteractiveMapPane(m_mapContent);
     m_mapPane.addMouseMotionListener(new CoordinateTracker());
     m_mapPane.setBackground(Color.BLACK);
     m_mapPane.grabFocus();
     
+    m_cPanel          = new CartographerPanel(this, cartographer);
     m_queryPanel      = new QueryPanel(m_mapPane);
     m_layerTable      = new LayerTable(m_mapContent);
     m_propertyTable   = new JTable();
@@ -77,24 +83,24 @@ public class MapFrame extends JFrame
     createStatusBar();
   }
 
-  public void addLayer(FeatureSource source) 
+  public Layer addLayer(StyleGenerator.Type styleType, FeatureSource source) 
   {
-    Style  style   = SLD.createSimpleStyle(source.getSchema());
+    Style  style   = m_styleGen.createStyle(styleType, source);
     Layer  layer   = new FeatureLayer(source, style);
 
-    SLD.setLineColour(style, Color.blue);
     m_mapContent.addLayer(layer);
     m_mapPane.zoomAll();
+    return layer;
   }
   
-  public void addLayer(URI uri) 
+  public void addLayer(StyleGenerator.Type styleType, URI uri) 
   {
     try
     {
       IndexedShapefileDataStore store   = new IndexedShapefileDataStore(uri.toURL(), true, true);
       SimpleFeatureSource       source  = store.getFeatureSource();
       
-      addLayer(source);
+      addLayer(styleType, source);
       
       //SpatialIndexFeatureCollection col = new SpatialIndexFeatureCollection(source.getFeatures());
       //SpatialIndexFeatureSource     src = new SpatialIndexFeatureSource(col);
@@ -110,10 +116,11 @@ public class MapFrame extends JFrame
   private void createDocks()
   {
     ViewMap viewMap         = new ViewMap();
-    View    mapPaneV        = new View("Map",         null, m_mapPane);
-    View    mapLayerV       = new View("Layers",      null, m_layerTable);
-    View    featureTableV   = new View("Features",    null, m_queryPanel);
-    View    propertyTableV  = new View("Properties",  null, new JScrollPane(m_propertyTable));
+    View    mapPaneV        = new View("Map",           null, m_mapPane);
+    View    mapLayerV       = new View("Layers",        null, m_layerTable);
+    View    featureTableV   = new View("Features",      null, m_queryPanel);
+    View    propertyTableV  = new View("Properties",    null, new JScrollPane(m_propertyTable));
+    View    cPanelV         = new View("Cartographer",  null, m_cPanel);
     
     m_rootWindow = DockingUtil.createRootWindow(viewMap, true);
     createDockTheme();
@@ -122,14 +129,15 @@ public class MapFrame extends JFrame
     viewMap.addView(1, mapLayerV);
     viewMap.addView(2, featureTableV);
     viewMap.addView(3, propertyTableV);
+    viewMap.addView(4, cPanelV);
     
     mapPaneV.getWindowProperties().setDragEnabled(false);
     mapPaneV.getWindowProperties().setMinimizeEnabled(false);
     mapPaneV.getWindowProperties().setUndockEnabled(false);
     
-    DockingWindow twE = new TabWindow(mapLayerV);
-    DockingWindow twW = new TabWindow(propertyTableV);
-    DockingWindow twS = new TabWindow(featureTableV);
+    DockingWindow twE   = new TabWindow(new DockingWindow[] {mapLayerV, cPanelV});
+    DockingWindow twW   = new TabWindow(propertyTableV);
+    DockingWindow twS   = new TabWindow(featureTableV);
     
     //twE.setPreferredMinimizeDirection(Direction.LEFT);
     //twW.setPreferredMinimizeDirection(Direction.RIGHT);
@@ -208,8 +216,15 @@ public class MapFrame extends JFrame
     t.addSeparator();
     t.add(InvokeAction.makeButton("Select Region",  "region.png",        m_mapPane, "regionSelect"));
     t.add(InvokeAction.makeButton("Reset Region",   "region-remove.png", m_mapPane, "regionReset"));
+    t.addSeparator();
+    t.add(InvokeAction.makeButton("GC",             "region-remove.png", this,      "runGC"));
     
     add(t, BorderLayout.PAGE_START);
+  }
+  
+  public Selector getSelector()
+  {
+    return m_mapPane.getSelector();
   }
   
   public void onAddLayer()
@@ -217,7 +232,15 @@ public class MapFrame extends JFrame
     File file = JFileDataStoreChooser.showOpenFile("shp", new File("data"), null);
     
     if (file != null)
-      addLayer(file.toURI());
+      addLayer(StyleGenerator.Type.DEFAULT, file.toURI());
+  }
+  
+  public void runGC()
+  {
+    Runtime runtime = Runtime.getRuntime();
+    System.gc();
+    System.out.println(runtime.freeMemory());
+    System.out.println(runtime.totalMemory());
   }
 }
 /*

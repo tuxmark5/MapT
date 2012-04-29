@@ -319,6 +319,19 @@ public class Selector
     ((FeatureLayer) layer).setStyle(style);
   }
   
+  public void selectFeature(FeatureSource source, FeatureId featureId)
+  {
+    for (Layer layer: m_mapContent.layers())
+    {
+      if (layer.getFeatureSource() == source)
+      {
+        Set<FeatureId> selection = new HashSet<FeatureId>();
+        selection.add(featureId);
+        select(layer, selection);
+      }
+    }
+  }
+  
   public void setFeatureSource(SimpleFeatureSource sf)
   {
     m_featureSource = sf;

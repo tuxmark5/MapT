@@ -8,7 +8,7 @@ public class OpTraceSurface extends OpTrace
   @Override
   public void applyIntersection(Mountain m, Geometry g, Ray r, Geometry i)
   {
-    double elev = (Double) g.getUserData();
+    double elev = (Integer) g.getUserData();
     
     for (Coordinate c: i.getCoordinates())
     {

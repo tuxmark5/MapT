@@ -4,11 +4,33 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.io.IOException;
+import org.geotools.data.FeatureSource;
+import org.geotools.data.collection.SpatialIndexFeatureCollection;
+import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.map.Layer;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class Util
 {
+  public static void dispose(Layer layer)
+  {
+    try
+    {
+      FeatureSource<?, ?>       source      = layer.getFeatureSource();
+      FeatureCollection<?, ?>   collection  = source.getFeatures();
+      
+      if (collection instanceof SpatialIndexFeatureCollection)
+        ((SpatialIndexFeatureCollection) collection).clear();
+      layer.dispose();
+    }
+    catch (IOException ex)
+    {
+      System.out.println(ex.toString());
+    }
+  }
+  
   public static Rectangle toRectangle(Point p0, Point p1)
   {
     int x = Math.min(p0.x,  p1.x);

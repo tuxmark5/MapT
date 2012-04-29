@@ -22,7 +22,7 @@ public class OpCollectGeometries implements Operator<Geometry, Object>
     {
       if (!m.isValid())
         continue;
-      if (geom.isWithinDistance(m.point, horizon))
+      if (m.point.isWithinDistance(geom, horizon))
         m.geometries.add(geom);
     }
     return null;

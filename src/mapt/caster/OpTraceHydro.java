@@ -20,6 +20,9 @@ public class OpTraceHydro extends OpTrace
   @Override
   public void applyIntersection(Mountain m, Geometry g, Ray r, Geometry i)
   {
-    r.points.add(new RayPoint(RayPoint.Type.WATER, i.getCoordinate()));
+    RayPoint target = new RayPoint(RayPoint.Type.WATER, i.getCoordinate());
+    
+    r.points.add(target);
+    r.target = target;
   }
 }

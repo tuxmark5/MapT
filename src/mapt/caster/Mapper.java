@@ -21,6 +21,14 @@ public class Mapper
     }
   }
   
+  public static void mapAll(Collection<Mountain> collection, Operator<Mountain, Object> op)
+  {
+    Iterator<Mountain> iter = collection.iterator();
+    
+    while (iter.hasNext())
+      op.apply(iter.next());
+  }
+  
   public static <A, B> void map(List<B> list, Collection<A> collection, Operator<A, B> op)
   {
     Iterator<A> iter = collection.iterator();
