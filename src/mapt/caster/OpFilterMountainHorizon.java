@@ -3,10 +3,9 @@ package mapt.caster;
 public class OpFilterMountainHorizon implements Operator<Mountain, Object>
 {
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
     if (m.geometries.isEmpty())
       m.validHydroProximity = false;
-    return null;
   } 
 }

@@ -28,6 +28,8 @@ public class CartographerPanel extends JPanel implements HyperlinkListener
   private JSpinner      forestHeight            = new JSpinner();
   private JSpinner      horizonRadius           = new JSpinner();
   private JSpinner      minSettlementDistance   = new JSpinner();
+  private JSpinner      maxPopulationDensity    = new JSpinner();
+  private JSpinner      minHeightDifference     = new JSpinner();
   private JSpinner      rayCount                = new JSpinner();
   private JSpinner      rayLength               = new JSpinner();
   private JButton       runButton               = new JButton("Run");
@@ -94,7 +96,7 @@ public class CartographerPanel extends JPanel implements HyperlinkListener
     c.gridwidth   = 1;
     c.gridheight  = 1;
     
-    if (row == 11)
+    if (row == 15)
     {
       c.weighty = 10.0;
       c.fill    = GridBagConstraints.BOTH;
@@ -139,6 +141,8 @@ public class CartographerPanel extends JPanel implements HyperlinkListener
   { 
     forestHeight.setModel         (new SpinnerNumberModel(   20.0,   1.0,   100.0,   5.0));
     horizonRadius.setModel        (new SpinnerNumberModel(  500.0,   1.0, 50000.0, 100.0));
+    maxPopulationDensity.setModel (new SpinnerNumberModel(  100.0,   0.0,  1000.0, 100.0));
+    minHeightDifference.setModel  (new SpinnerNumberModel(   10.0,   1.0,   200.0,   5.0));
     minSettlementDistance.setModel(new SpinnerNumberModel(10000.0,   1.0, 50000.0, 100.0));
     rayCount.setModel             (new SpinnerNumberModel(      8,     3,      32,     1));
     rayLength.setModel            (new SpinnerNumberModel(  500.0,   1.0, 50000.0, 100.0));
@@ -151,32 +155,41 @@ public class CartographerPanel extends JPanel implements HyperlinkListener
     addRow(2, new JLabel("Horizon radius"));
     addRow(3, horizonRadius);
     
-    addRow(4, new JLabel("Min settlement dist."));
-    addRow(5, minSettlementDistance);
+    addRow(4, new JLabel("Max population density"));
+    addRow(5, maxPopulationDensity);
     
-    addRow(6, new JLabel("Ray count"));
-    addRow(7, rayCount);
+    addRow(6, new JLabel("Min height difference"));
+    addRow(7, minHeightDifference);
     
-    addRow(8, new JLabel("Ray length"));
-    addRow(9, rayLength);
+    addRow(8, new JLabel("Min settlement distance"));
+    addRow(9, minSettlementDistance);
+    
+    addRow(10, new JLabel("Ray count"));
+    addRow(11, rayCount);
+    
+    addRow(12, new JLabel("Ray length"));
+    addRow(13, rayLength);
     
     runButton.setMaximumSize(new Dimension(100, 25));
-    addRow(10, runButton);
+    addRow(14, runButton);
     
     stepDescription.setEditable(false);
     stepDescription.setEditorKit(new HTMLEditorKit());
     stepDescriptionPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
     stepDescriptionPane.setPreferredSize(new Dimension(100, 350));
-    addRow(11, stepDescriptionPane);
+    addRow(15, stepDescriptionPane);
     
     progressBar.setPreferredSize(new Dimension(10, 25));
-    addRow(12, progressBar);
+    addRow(16, progressBar);
   }
   
   public void startSearch()
   {
+    cartographer.searchArea             = mapFrame.getMapPane().getSearchArea();
     cartographer.forestHeight           = (Double)  forestHeight.getValue();
     cartographer.horizonRadius          = (Double)  horizonRadius.getValue();
+    cartographer.maxPopulationDensity   = (Double)  maxPopulationDensity.getValue();
+    cartographer.minHeightDifference    = (Double)  minHeightDifference.getValue();
     cartographer.minSettlementDistance  = (Double)  minSettlementDistance.getValue();
     cartographer.rayCount               = (Integer) rayCount.getValue();
     cartographer.rayLength              = (Double)  rayLength.getValue();

@@ -3,7 +3,7 @@ package mapt.caster;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 
-public class OpTraceSurface extends OpTrace
+public class OpTraceContours extends OpTrace
 {
   @Override
   public void applyIntersection(Mountain m, Geometry g, Ray r, Geometry i)

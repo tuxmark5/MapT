@@ -17,7 +17,7 @@ public class OpGenMountainLayer extends OpGenLayer<Mountain, Object>
   }
    
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
     SimpleFeature feature = buildFeature();
 
@@ -29,6 +29,5 @@ public class OpGenMountainLayer extends OpGenLayer<Mountain, Object>
     feature.setAttribute(5, m.numValidRays);
     
     collection.add(feature);
-    return null;
   }
 }

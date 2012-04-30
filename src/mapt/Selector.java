@@ -12,10 +12,8 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.map.FeatureLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
-import org.geotools.map.StyleLayer;
 import org.geotools.styling.*;
 import org.opengis.feature.Feature;
 import org.opengis.feature.Property;
@@ -61,40 +59,18 @@ public class Selector
     m_selection.clear();
   }
   
-  private Style createDefaultStyle(StyleLayer layer) 
-  {
-    Rule              rule    = defaultRule(layer.getStyle());
-    FeatureTypeStyle  ftStyle = m_sf.createFeatureTypeStyle();
-    Style             style;
-    
-    ftStyle.rules().add(rule);
-    style = m_sf.createStyle();
-    style.featureTypeStyles().add(ftStyle);
-    
-    return style;
-  }
-  
-  private Style createSelectedStyle(StyleLayer layer, Set<FeatureId> ids) 
+  private Rule createSelectionRule(Layer layer, Set<FeatureId> ids) 
   {
     FeatureSource<?, ?> source        = layer.getFeatureSource();
     String              geomAttr      = source.getSchema().getGeometryDescriptor().getLocalName();
     GeomType            geomType      = getFeatureSourceGeomType(source);
+    Rule                rule          = createRule(geomAttr, geomType, SELECTED_COLOUR, SELECTED_COLOUR);
     
-    Rule                selectedRule  = createRule(geomAttr, geomType, SELECTED_COLOUR, SELECTED_COLOUR);
-    Rule                otherRule     = defaultRule(layer.getStyle());
-    FeatureTypeStyle    ftStyle       = m_sf.createFeatureTypeStyle();
-    Style               style         = m_sf.createStyle();
-    
-    selectedRule.setFilter(m_ff.id(ids));
-    otherRule.setElseFilter(true);
-
-    ftStyle.rules().add(selectedRule);
-    ftStyle.rules().add(otherRule);
-    
-    style.featureTypeStyles().add(ftStyle);
-    return style;
+    rule.setName("selection");
+    rule.setFilter(m_ff.id(ids));
+    return rule;
   }
-  
+ 
   private Rule createRule(String geomAttr, GeomType geomType, Color outlineColor, Color fillColor)
   {
     Fill        fill;
@@ -131,18 +107,6 @@ public class Selector
 
     rule.symbolizers().add(symbolizer);
     return rule;
-  }
-  
-  public static Rule defaultRule(Style style)
-  {
-    FeatureTypeStyle ftStyle  = style.featureTypeStyles().get(0);
-    List<Rule>       rules    = ftStyle.rules();
-    
-    for (Rule rule: rules)
-      if (rule.isElseFilter())
-        return rule;
-    
-    return rules.get(0);
   }
 
   public void filterFeatures(Layer layer, Filter filter, Set<FeatureId> ids)
@@ -273,6 +237,22 @@ public class Selector
       }
     }
   }
+  
+  public void removeSelectionRule(FeatureTypeStyle ftStyle)
+  {
+    List<Rule> rules = ftStyle.rules();
+    
+    for (int i = 0; i < rules.size(); )
+    {
+      Rule    rule = rules.get(i);
+      String  name = rule.getName();
+      
+      if (name != null && name.equals("selection"))
+        rules.remove(i);
+      else
+        i++;
+    }
+  }
 
   public void select(ReferencedEnvelope env)
   {
@@ -307,16 +287,18 @@ public class Selector
   
   public void select(Layer layer, Set<FeatureId> selection)
   {
-    Style style;
+    Style             style     = layer.getStyle();
+    FeatureTypeStyle  ftStyle   = style.featureTypeStyles().get(0);
     
     m_selection.put(layer, selection);
+    removeSelectionRule(ftStyle);
     
-    if (selection.isEmpty()) 
-      style = createDefaultStyle((StyleLayer) layer);
-    else
-      style = createSelectedStyle((StyleLayer) layer, selection);
+    if (!selection.isEmpty()) 
+      ftStyle.rules().add(0, createSelectionRule(layer, selection));
     
-    ((FeatureLayer) layer).setStyle(style);
+    // TODO: find a way to update view
+    layer.setVisible(!layer.isVisible());
+    layer.setVisible(!layer.isVisible());
   }
   
   public void selectFeature(FeatureSource source, FeatureId featureId)

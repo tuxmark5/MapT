@@ -20,7 +20,7 @@ public class OpMakeRays implements Operator<Mountain, Object>
   }
   
   @Override
-  public Object apply(Mountain mountain)
+  public void apply(Mountain mountain, Object unused)
   {
     double      angle   = 0.0;
     RayPoint    coordA  = new RayPoint(RayPoint.Type.START, mountain.point.getCoordinate());
@@ -39,7 +39,5 @@ public class OpMakeRays implements Operator<Mountain, Object>
       mountain.rays[i]  = new Ray(coordA, coordB, ray);
       angle            += step;
     }
-    
-    return null;
   }
 }

@@ -1,10 +1,11 @@
 package mapt.caster;
 
 import com.vividsolutions.jts.geom.Geometry;
+import java.util.List;
 import org.geotools.filter.function.StaticGeometry;
 import org.opengis.feature.Feature;
 
-public class OpBufferFeature implements Operator<Feature, Geometry>
+public class OpBufferFeature implements Operator<Feature, List<Geometry>>
 {
   private double amount;
   
@@ -14,10 +15,11 @@ public class OpBufferFeature implements Operator<Feature, Geometry>
   }
   
   @Override
-  public Geometry apply(Feature feature)
+  public void apply(Feature feature, List<Geometry> dst)
   {
     Mountain mountain = new Mountain();
     Geometry geometry = (Geometry) feature.getDefaultGeometryProperty().getValue();
-    return StaticGeometry.buffer(geometry, amount);
+   
+    dst.add(StaticGeometry.buffer(geometry, amount));
   }
 }

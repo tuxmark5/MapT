@@ -1,28 +1,28 @@
 package mapt.caster;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 
 public class OpTraceHydro extends OpTrace
 {
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
-    super.apply(m);
+    super.apply(m, unused);
     
     // Invalidate rays that don't hit water
     for (Ray r: m.rays)
       if (!r.hasPointOfType(RayPoint.Type.WATER))
         r.invalidate();
-    
-    return null;
   }
   
   @Override
   public void applyIntersection(Mountain m, Geometry g, Ray r, Geometry i)
   {
-    RayPoint target = new RayPoint(RayPoint.Type.WATER, i.getCoordinate());
-    
-    r.points.add(target);
-    r.target = target;
+    for (Coordinate point: i.getCoordinates())
+    {
+      RayPoint target = new RayPoint(RayPoint.Type.WATER, point);
+      r.points.add(target);
+    }
   }
 }

@@ -10,9 +10,8 @@ public class OpCompileRays implements Operator<Mountain, Object>
   }
   
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
     m.compileRays(forestHeight);
-    return null;
   } 
 }

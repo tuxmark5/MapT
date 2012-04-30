@@ -28,7 +28,8 @@ public class RayPoint extends Coordinate
   
   public Type     type;
   public double   distance;
-  public double   maxZ;
+  public double   slope;
+  public double   maxSlope;
   public int      valid;
   
   public RayPoint(Type type)
@@ -42,11 +43,16 @@ public class RayPoint extends Coordinate
     this.type = type;
   }
   
+  public boolean hasElevation()
+  {
+    return (type == Type.START) || (type == Type.END) || (type == Type.ELEV);
+  }
+  
   public boolean hasNativeHeight()
   {
     return (type == Type.START) || (type == Type.ELEV);
   }
-  
+
   public void interpolateZ(RayPoint p0, RayPoint p1)
   {
     if (!p0.hasNativeHeight() || !p1.hasNativeHeight())

@@ -3,19 +3,21 @@ package mapt.caster;
 import com.vividsolutions.jts.geom.Geometry;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import org.geotools.data.DataStoreFinder;
 import org.geotools.data.shapefile.ShapefileDataStore;
-import org.geotools.data.shapefile.indexed.IndexedShapefileDataStore;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.opengis.filter.FilterFactory2;
 
 public class Cartographer implements Runnable
 {
+  public FilterFactory2           ff;
   public List<Mountain>           mountains;
   
+  public ShapefileDataStore       contourStore;
   public ShapefileDataStore       districtStore;
   public ShapefileDataStore       forestStore;
   public ShapefileDataStore       lakeStore;
@@ -24,6 +26,7 @@ public class Cartographer implements Runnable
   public ShapefileDataStore       settlementStore;
   public ShapefileDataStore       surfaceStore;
   
+  public SimpleFeatureSource      contourSource;
   public SimpleFeatureSource      districtSource;
   public SimpleFeatureSource      forestSource;
   public SimpleFeatureSource      lakeSource;
@@ -37,8 +40,11 @@ public class Cartographer implements Runnable
   public SimpleFeatureSource      mountain2Source;
   public SimpleFeatureSource      settlement2Source;
   
+  public ReferencedEnvelope       searchArea;
   public double                   forestHeight          = 20.0;
   public double                   horizonRadius         = 500.0;
+  public double                   maxPopulationDensity  = 1000.0;
+  public double                   minHeightDifference   = 10.0;
   public double                   minSettlementDistance = 10000.0;
   public int                      rayCount              = 8;
   public double                   rayLength             = 500.0;
@@ -47,6 +53,7 @@ public class Cartographer implements Runnable
   
   public Cartographer()
   {
+    ff = CommonFactoryFinder.getFilterFactory2(null);
   }
   
   public void cleanup()
@@ -57,6 +64,13 @@ public class Cartographer implements Runnable
     mountain2Source     = null;
     settlement2Source   = null;
     System.gc();
+  }
+  
+  private SimpleFeatureCollection getFeatures(SimpleFeatureSource source) throws IOException
+  {
+    if (searchArea == null)
+      return source.getFeatures();
+    return source.getFeatures(ff.intersects(ff.property("the_geom"), ff.literal(searchArea)));
   }
   
   public SimpleFeatureSource genMountainLayer()
@@ -116,21 +130,23 @@ public class Cartographer implements Runnable
     OpGenSettlementLayer op = new OpGenSettlementLayer(this);
     
     stepBegin("Generating settlement layer");
-    Mapper.map(null, settlementSource.getFeatures(), op);
+    Mapper.map(settlementSource.getFeatures(), op, null);
     
     return op.genSource();
   }
   
   public void loadLayers() throws IOException
   {
+    contourStore        = loadData("data/lt50shp/elev.shp");
     districtStore       = loadData("data/lt250shp/AdminVien_L.shp");
     forestStore         = loadData("data/lt200shp/miskai.shp");
     lakeStore           = loadData("data/lt250shp/Ezerai.shp");
     mountainStore       = loadData("data/lt200shp/virsukal.shp");
     riverStore          = loadData("data/lt250shp/Upes_L.shp");
     settlementStore     = loadData("data/lt250shp/Vietoves_P.shp");
-    surfaceStore        = loadData("data/lt50shp/elev.shp");
+    surfaceStore        = loadData("data/lt200shp/pavirs_lt_p.shp");
     
+    contourSource       = contourStore.getFeatureSource();
     districtSource      = districtStore.getFeatureSource();
     forestSource        = forestStore.getFeatureSource();
     lakeSource          = lakeStore.getFeatureSource();
@@ -140,18 +156,32 @@ public class Cartographer implements Runnable
     surfaceSource       = surfaceStore.getFeatureSource();
   }
   
+  private void processContours() throws IOException
+  {
+    List<Geometry> contours = new ArrayList<Geometry>();
+    
+    stepBegin("Extracting contour geometry");
+    Mapper.map(getFeatures(contourSource),      new OpExtractGeometry("AUKSTIS"), contours);
+    
+    stepBegin("Collecting contour geometries");
+    Mapper.map(contours,                        new OpCollectGeometries(mountains, horizonRadius), null);
+    
+    stepBegin("Tracing bound contour geometries");
+    Mapper.map(mountains,                       new OpTraceContours());
+  }
+  
   private void processForests() throws IOException
   {
     List<Geometry> forests = new ArrayList<Geometry>();
     
     stepBegin("Extracting forest geometry");
-    Mapper.map(forests,   forestSource.getFeatures(),       new OpExtractGeometry());
+    Mapper.map(getFeatures(forestSource),       new OpExtractGeometry(), forests);
     
     stepBegin("Collecting forest geometries");
-    Mapper.map(null,      forests,                          new OpCollectGeometries(mountains, horizonRadius));
+    Mapper.map(forests,                         new OpCollectGeometries(mountains, horizonRadius), null);
     
     stepBegin("Tracing bound forest geometries");
-    Mapper.map(           mountains,                        new OpTraceForest());
+    Mapper.map(mountains,                       new OpTraceForest());
   }
   
   private void processHydros() throws IOException
@@ -159,43 +189,40 @@ public class Cartographer implements Runnable
     List<Geometry> hydros = new ArrayList<Geometry>();
     
     stepBegin("Extracting river geometry");
-    Mapper.map(hydros,    riverSource.getFeatures(),        new OpExtractGeometry());
+    Mapper.map(getFeatures(riverSource),        new OpExtractGeometry(), hydros);
     
     stepBegin("Extracting and flattening lake geometry");
-    Mapper.map(hydros,    lakeSource.getFeatures(),         new OpToLineString());
+    Mapper.map(getFeatures(lakeSource),         new OpToLineString(), hydros);
     
     stepBegin("Collecting hydros");
-    Mapper.map(null,      hydros,                           new OpCollectGeometries(mountains, horizonRadius));
+    Mapper.map(hydros,                          new OpCollectGeometries(mountains, horizonRadius), null);
     
     stepBegin("Invalidating mountains that are not close enough to hydros");
-    Mapper.map(           mountains,                        new OpFilterMountainHorizon());
+    Mapper.map(mountains,                       new OpFilterMountainHorizon());
     
     stepBegin("Generating rays for each valid mountain");
-    Mapper.map(           mountains,                        new OpMakeRays(rayCount, rayLength));
+    Mapper.map(mountains,                       new OpMakeRays(rayCount, rayLength));
     
     stepBegin("Tracing bound hydros geometries");
-    Mapper.map(           mountains,                        new OpTraceHydro());
+    Mapper.map(mountains,                       new OpTraceHydro());
   }
   
   private void processSettlements() throws IOException
   {
     // Settlements
     stepBegin("Invalidating mountains that are too close to settlements");
-    Mapper.map(null,      settlementSource.getFeatures(),   new OpSettlementFilter(this, minSettlementDistance));
+    Mapper.map(getFeatures(settlementSource),   new OpSettlementFilter(this, minSettlementDistance), null);
   }
   
   private void processSurface() throws IOException
   {
-    List<Geometry> elevs = new ArrayList<Geometry>();
+    Set<RayPoint> points = new HashSet<RayPoint>();
     
-    stepBegin("Extracting surface geometry");
-    Mapper.map(elevs,     surfaceSource.getFeatures(),      new OpExtractGeometry("AUKSTIS"));
+    stepBegin("Collecting points with unknown elevation");
+    Mapper.map(mountains,                       new OpGetNonElevatedPoints(), points);
     
-    stepBegin("Collecting surface geometries");
-    Mapper.map(null,      elevs,                            new OpCollectGeometries(mountains, horizonRadius));
-    
-    stepBegin("Tracing bound surface geometries");
-    Mapper.map(           mountains,                        new OpTraceSurface());
+    stepBegin("Querying elevation for each un-elevated point");
+    Mapper.map(points,                          new OpQueryElevation(surfaceSource), null);
   }
   
   @Override
@@ -203,21 +230,22 @@ public class Cartographer implements Runnable
   {
     try
     {
-      progressNotifier.taskBegin(20);
+      progressNotifier.taskBegin(22);
       
       // Mountains
       mountains           = new ArrayList<Mountain>();
       
       stepBegin("Extracting mountain data from mountain shapefile");
-      Mapper.map(mountains, mountainSource.getFeatures(),     new OpExtractMountain());
+      Mapper.map(getFeatures(mountainSource),   new OpExtractMountain(), mountains);
 
       processSettlements();
       processHydros();
-      processSurface();
       processForests();
+      processSurface();
+      processContours();
 
       stepBegin("Compiling mountain rays");
-      Mapper.map(           mountains,                        new OpCompileRays(forestHeight));
+      Mapper.map(mountains,                     new OpCompileRays(forestHeight));
 
       raySource           = genRayLayer();
       rayPointSource      = genRayPointLayer();
@@ -254,10 +282,15 @@ public class Cartographer implements Runnable
   {
     try
     {
-      URI uri = (new File(relativePath)).toURI();
-      return new IndexedShapefileDataStore(uri.toURL(), true, false);
+      File  file  = new File(relativePath);
+      Map   map   = new HashMap();
+      
+      map.put("create spatial index", Boolean.TRUE);
+      map.put("url", file.toURI().toURL());
+
+      return (ShapefileDataStore) DataStoreFinder.getDataStore(map);
     }
-    catch (MalformedURLException ex)
+    catch (IOException ex)
     {
       return null;
     }

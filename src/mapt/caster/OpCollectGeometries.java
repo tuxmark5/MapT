@@ -15,7 +15,7 @@ public class OpCollectGeometries implements Operator<Geometry, Object>
   }
   
   @Override
-  public Object apply(Geometry geom)
+  public void apply(Geometry geom, Object dummy)
   {
     // todo: PreparedGeometry, iterate over mountains, circles
     for (Mountain m: mountains)
@@ -25,6 +25,5 @@ public class OpCollectGeometries implements Operator<Geometry, Object>
       if (m.point.isWithinDistance(geom, horizon))
         m.geometries.add(geom);
     }
-    return null;
   } 
 }

@@ -22,11 +22,9 @@ public class OpGenSettlementLayer extends OpGenLayer<Feature, Object>
   }
   
   @Override
-  public Object apply(Feature feature)
+  public void apply(Feature feature, Object unused)
   {
     geometries.add((Geometry) feature.getDefaultGeometryProperty().getValue());
-    
-    return null;
   }
   
   @Override

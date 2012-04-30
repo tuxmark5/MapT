@@ -15,6 +15,7 @@ public class StyleGenerator
   
   public enum Type
   {
+    CONTOUR,
     DEFAULT,
     DISTRICT,
     FOREST,
@@ -32,14 +33,6 @@ public class StyleGenerator
   public StyleGenerator()
   {
     
-  }
-  
-  public Rule addRule(Symbolizer symbolizer)
-  {
-    Rule rule = sf.createRule();
-    rule.symbolizers().add(symbolizer);
-    ftStyle.rules().add(rule);
-    return rule;
   }
   
   public LineSymbolizer newLineSym(Color fillColor, float opacity)
@@ -98,21 +91,31 @@ public class StyleGenerator
   {
     switch (type)
     {
+      case CONTOUR:
+        ruleBegin(newLineSym(new Color(0xD2, 0x6F, 0x30), 1.0f));
+        ruleEnd();
+        break;
+              
       case DEFAULT:
-        addRule(newLineSym(Color.BLUE, 1.0f));
+        ruleBegin(newLineSym(Color.BLUE, 1.0f));
+        ruleEnd();
         break;
         
       case DISTRICT:
-        addRule(newLineSym(new Color(0x91, 0x55, 0x49), 0.2f));
+        ruleBegin(newLineSym(new Color(0x91, 0x55, 0x49), 0.2f));
+        ruleEnd();
         break;
         
       case FOREST:
-        addRule(newPolySym(new Color(0x2E, 0x6D, 0x28), 0.4f));
+        ruleBegin(newPolySym(new Color(0x2E, 0x6D, 0x28), 0.4f));
+        ruleEnd();
         break;
         
       case LAKE:
-        addRule(newLineSym(new Color(0x00, 0x00, 0xFF), 1.0f));
-        addRule(newPolySym(new Color(0x00, 0x00, 0xFF), 0.2f));
+        ruleBegin(newLineSym(new Color(0x00, 0x00, 0xFF), 1.0f));
+        ruleEnd();
+        ruleBegin(newPolySym(new Color(0x00, 0x00, 0xFF), 0.2f));
+        ruleEnd();
         break;
         
       case MOUNTAIN:
@@ -125,17 +128,20 @@ public class StyleGenerator
         break;
         
       case RIVER:
-        addRule(newLineSym(Color.BLUE, 1.0f));
+        ruleBegin(newLineSym(Color.BLUE, 1.0f));
+        ruleEnd();
         break;
         
       case SETTLEMENT:
-        addRule(newPolySym(new Color(0x91, 0x55, 0x49), 0.2f));
+        ruleBegin(newPolySym(new Color(0x91, 0x55, 0x49), 0.2f));
+        ruleEnd();
         break;
         
       case SURFACE:
-        addRule(newLineSym(new Color(0xD2, 0x6F, 0x30), 1.0f));
+        ruleBegin(newLineSym(Color.BLUE, 1.0f));
+        ruleEnd();
         break;
-        
+
       case RAY: 
         ruleBegin(newLineSym(new Color(0x00, 0xFF, 0x00), 1.0f))
           .setFilter(ff.equal(ff.property("valid"), ff.literal(1), false));
@@ -146,16 +152,20 @@ public class StyleGenerator
         break;
         
       case RAY_POINT:
-        addRule(newPtSym(sf.getSquareMark(), Color.RED,    4))
+        ruleBegin(newPtSym(sf.getSquareMark(), Color.RED,    5))
           .setFilter(ff.equal(ff.property("valid"), ff.literal(-1), false));
-        addRule(newPtSym(sf.getSquareMark(), Color.YELLOW, 4))
+        ruleEnd();
+        ruleBegin(newPtSym(sf.getSquareMark(), Color.YELLOW, 5))
           .setFilter(ff.equal(ff.property("valid"), ff.literal( 0), false));
-        addRule(newPtSym(sf.getSquareMark(), Color.GREEN,  4))
+        ruleEnd();
+        ruleBegin(newPtSym(sf.getSquareMark(), Color.GREEN,  5))
           .setElseFilter(true);
+        ruleEnd();
         break;
         
       case SETTLEMENT2:
-        addRule(newPolySym(new Color(0x00, 0xFF, 0xFF), 0.2f));
+        ruleBegin(newPolySym(new Color(0x00, 0xFF, 0xFF), 0.2f));
+        ruleEnd();
         break;
     }
   }

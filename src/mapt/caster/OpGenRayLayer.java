@@ -13,10 +13,10 @@ public class OpGenRayLayer extends OpGenLayer<Mountain, Object>
   }
    
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
     if (m.rays == null)
-      return null;
+      return;
     
     for (Ray r: m.rays)
     {
@@ -26,7 +26,5 @@ public class OpGenRayLayer extends OpGenLayer<Mountain, Object>
       feature.setAttribute(1, r.valid ? 1 : 0);
       collection.add(feature);
     }
-    
-    return null;
   }
 }

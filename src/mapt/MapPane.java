@@ -7,15 +7,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.swing.JComponent;
-import org.geotools.data.FeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.map.event.MapLayerListEvent;
 import org.geotools.map.event.MapLayerListListener;
 import org.geotools.renderer.GTRenderer;
 import org.geotools.renderer.lite.StreamingRenderer;
-import org.opengis.filter.identity.FeatureId;
 
 public class MapPane extends JComponent implements MapLayerListListener, Runnable
 {
@@ -96,6 +93,11 @@ public class MapPane extends JComponent implements MapLayerListListener, Runnabl
   public MapContent getMapContent()
   {
     return m_content;
+  }
+  
+  public ReferencedEnvelope getSearchArea()
+  {
+    return m_region;
   }
   
   protected Tile getTile(int x, int y)

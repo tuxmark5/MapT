@@ -88,6 +88,7 @@ public class MapFrame extends JFrame
     Style  style   = m_styleGen.createStyle(styleType, source);
     Layer  layer   = new FeatureLayer(source, style);
 
+    layer.setSelected(false);
     m_mapContent.addLayer(layer);
     m_mapPane.zoomAll();
     return layer;
@@ -222,6 +223,11 @@ public class MapFrame extends JFrame
     add(t, BorderLayout.PAGE_START);
   }
   
+  public InteractiveMapPane getMapPane()
+  {
+    return m_mapPane;
+  }
+  
   public Selector getSelector()
   {
     return m_mapPane.getSelector();
@@ -238,7 +244,9 @@ public class MapFrame extends JFrame
   public void runGC()
   {
     Runtime runtime = Runtime.getRuntime();
+    
     System.gc();
+    System.runFinalization();
     System.out.println(runtime.freeMemory());
     System.out.println(runtime.totalMemory());
   }

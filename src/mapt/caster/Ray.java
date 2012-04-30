@@ -4,21 +4,23 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
 public class Ray
 {
+  static SplineInterpolator interpolator = new SplineInterpolator();
   public LineString       ray;
   public List<RayPoint>   points;
-  public RayPoint         target;
   public boolean          valid;
   
   public Ray(RayPoint a, RayPoint b, LineString ray)
   {
-    this.points = new ArrayList<RayPoint>();
+    this.points   = new ArrayList<RayPoint>();
     this.points.add(a);
     this.points.add(b);
-    this.ray    = ray;
-    this.valid  = true;
+    this.ray      = ray;
+    this.valid    = true;
   }
   
   private void applyForestModifiers(double forestHeight)
@@ -38,23 +40,42 @@ public class Ray
   
   private void checkVisibility()
   {
-    RayPoint  p0    = points.get(0);
-    RayPoint  p1    = target;
-    double    slope = (p1.z - p0.z) / p1.distance;
+    RayPoint  origin    = points.get(0);
+    double    maxSlope  = -Math.sqrt(3.0); // -60 deg
     
-    for (RayPoint p: points)
+    valid = false;
+    
+    for (int i = 1; i < points.size(); i++)
     {
-      p.maxZ  = p0.z + p.distance * slope;
-      p.valid = p.z > p.maxZ ? -1 : 1;
+      RayPoint point  = points.get(i);
       
-      if (p.valid == -1)
+      if (point.valid == -1)
+        break;
+      
+      point.slope     = (point.z - origin.z) / point.distance;
+      point.maxSlope  = Math.max(point.slope, maxSlope);
+      
+      // uzstoja horizonta
+      if (point.maxSlope > 0.0)
       {
-        valid = false;
+        point.valid   = -1;
         break;
       }
       
-      if (p.type == RayPoint.Type.WATER)
-        break;
+      if (point.type == RayPoint.Type.WATER)
+      {
+        if ((point.slope > maxSlope) && ((origin.z - point.z) > 5.0))
+        {
+          point.valid = 1;
+          valid       = true;
+        }
+        else
+        {
+          point.valid = -1;
+        }
+      }
+      
+      maxSlope        = point.maxSlope;
     }
   }
    
@@ -88,32 +109,36 @@ public class Ray
   
   private void interpolateZ()
   {
-    RayPoint point0 = points.get(0);
-    RayPoint point1;
+    double[]  x;
+    double[]  y;
+    int       i         = 0;
+    int       numPoints = 0;
     
-    for (int i = 1; i < points.size(); i++)
+    for (RayPoint p: points)
+      if (p.hasElevation())
+        numPoints++;
+    
+    if (numPoints < 3)
+      return;
+    
+    x = new double[numPoints];
+    y = new double[numPoints];
+    
+    for (RayPoint p: points)
     {
-      RayPoint point = points.get(i);
-     
-      if (point.type == RayPoint.Type.ELEV)
+      if (p.hasElevation())
       {
-        point0 = point;
-      }
-      else
-      {
-        point1 = getNextElevPoint(i);
-        if (point1 != null)
-        {
-          point.interpolateZ(point0, point1);
-        }
-        else
-        {
-          System.err.println("Openended point");
-          //valid = false;
-          return;
-        }
+        x[i] = p.distance;
+        y[i] = p.z;
+        i++;
       }
     }
+    
+    PolynomialSplineFunction f = interpolator.interpolate(x, y);
+    
+    for (RayPoint p: points)
+      if (!p.hasElevation())
+        p.z = f.value(p.distance);
   }
   
   public void invalidate()

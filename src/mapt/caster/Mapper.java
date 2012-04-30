@@ -2,7 +2,6 @@ package mapt.caster;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.opengis.feature.Feature;
@@ -17,7 +16,7 @@ public class Mapper
     {
       Mountain m = iter.next();
       if (m.isValid())
-        op.apply(m);
+        op.apply(m, null);
     }
   }
   
@@ -26,33 +25,27 @@ public class Mapper
     Iterator<Mountain> iter = collection.iterator();
     
     while (iter.hasNext())
-      op.apply(iter.next());
+      op.apply(iter.next(), null);
   }
   
-  public static <A, B> void map(List<B> list, Collection<A> collection, Operator<A, B> op)
+  public static <A, B> void map(Collection<A> collection, Operator<A, B> op, B dst)
   {
     Iterator<A> iter = collection.iterator();
     
     while (iter.hasNext())
     {
-      B r = op.apply(iter.next());
-      if (r != null && list != null)
-        list.add(r);
+      op.apply(iter.next(), dst);
     }
   }
   
-  public static <B> void map(List<B> list, SimpleFeatureCollection collection, Operator<Feature, B> op)
+  public static <B> void map(SimpleFeatureCollection collection, Operator<Feature, B> op, B dst)
   {
     SimpleFeatureIterator iter = collection.features();
     
     try
     {
       while (iter.hasNext())
-      {
-        B r = op.apply(iter.next());
-        if (r != null && list != null)
-          list.add(r);
-      }
+        op.apply(iter.next(), dst);
     }
     finally
     {

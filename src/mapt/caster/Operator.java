@@ -2,5 +2,5 @@ package mapt.caster;
 
 public interface Operator<A, B>
 {
-  public B apply(A src);
+  public void apply(A src, B dst);
 }

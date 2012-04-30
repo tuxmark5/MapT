@@ -1,10 +1,11 @@
 package mapt.caster;
 
 import com.vividsolutions.jts.geom.Geometry;
+import java.util.List;
 import org.opengis.feature.Attribute;
 import org.opengis.feature.Feature;
 
-public class OpExtractGeometry implements Operator<Feature, Geometry>
+public class OpExtractGeometry implements Operator<Feature, List<Geometry>>
 {
   public String prop;
   
@@ -18,7 +19,7 @@ public class OpExtractGeometry implements Operator<Feature, Geometry>
   }
   
   @Override
-  public Geometry apply(Feature feature)
+  public void apply(Feature feature, List<Geometry> dst)
   {
     Geometry geom = (Geometry) feature.getDefaultGeometryProperty().getValue();
     
@@ -29,6 +30,6 @@ public class OpExtractGeometry implements Operator<Feature, Geometry>
       geom.setUserData(attr.getValue());
     }
     
-    return geom;
+    dst.add(geom);
   }
 }

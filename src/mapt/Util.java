@@ -19,10 +19,13 @@ public class Util
     try
     {
       FeatureSource<?, ?>       source      = layer.getFeatureSource();
+      if (source != null)
+      {
       FeatureCollection<?, ?>   collection  = source.getFeatures();
       
       if (collection instanceof SpatialIndexFeatureCollection)
         ((SpatialIndexFeatureCollection) collection).clear();
+      }
       layer.dispose();
     }
     catch (IOException ex)

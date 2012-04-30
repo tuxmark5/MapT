@@ -5,7 +5,7 @@ import com.vividsolutions.jts.geom.Geometry;
 public abstract class OpTrace implements Operator<Mountain, Object>
 {
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
     for (Geometry g: m.geometries)
     {
@@ -20,15 +20,8 @@ public abstract class OpTrace implements Operator<Mountain, Object>
       }
     }
     
-    // Invalidate rays that don't hit water
-    for (Ray r: m.rays)
-      if (!r.hasPointOfType(RayPoint.Type.WATER))
-        r.invalidate();
-    
     // Hydros are no longer needed
     m.geometries.clear();
-    
-    return null;
   }
   
   public abstract void applyIntersection(Mountain m, Geometry g, Ray r, Geometry i);

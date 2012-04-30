@@ -15,7 +15,7 @@ public class OpSettlementFilter implements Operator<Feature, Object>
   }
   
   @Override
-  public Object apply(Feature feature)
+  public void apply(Feature feature, Object unused)
   {
     Geometry geometry = (Geometry) feature.getDefaultGeometryProperty().getValue();
     
@@ -26,6 +26,5 @@ public class OpSettlementFilter implements Operator<Feature, Object>
       if (m.point.isWithinDistance(geometry, distance))
         m.validSettlementDistance = false;
     }
-    return null;
   }
 }

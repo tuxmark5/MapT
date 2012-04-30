@@ -268,8 +268,8 @@ public class InteractiveMapPane extends MapPane
       return;
     
     AffineTransform trans   = new AffineTransform();
-    double          scaleX  = (double) rect.width  / getWidth();
-    double          scaleY  = (double) rect.height / getHeight();
+    double          scaleX  = (double) rect.width  / (double) getWidth();
+    double          scaleY  = (double) rect.height / (double) getHeight();
     double          scale   = Math.max(scaleX, scaleY);
     
     trans.scale(scale, scale);
@@ -287,7 +287,7 @@ public class InteractiveMapPane extends MapPane
   {
     ReferencedEnvelope bounds = m_selector.getSelectionBounds();
     
-    bounds.expandBy(5.0);
+    bounds.expandBy(100.0);
     zoomMapArea(bounds);
   }
 }

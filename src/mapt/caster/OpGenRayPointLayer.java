@@ -11,16 +11,17 @@ public class OpGenRayPointLayer extends OpGenLayer<Mountain, Object>
     featureTypeBuilder.add("type",      String.class);
     featureTypeBuilder.add("distance",  Double.class);
     featureTypeBuilder.add("z",         Double.class);
-    featureTypeBuilder.add("maxZ",      Double.class);
+    featureTypeBuilder.add("slope",     Double.class);
+    featureTypeBuilder.add("maxSlope",  Double.class);
     featureTypeBuilder.add("valid",     Integer.class);
     featureTypeEnd();
   }
    
   @Override
-  public Object apply(Mountain m)
+  public void apply(Mountain m, Object unused)
   {
     if (m.rays == null)
-      return null;
+      return;
     
     for (Ray r: m.rays)
     {
@@ -32,8 +33,6 @@ public class OpGenRayPointLayer extends OpGenLayer<Mountain, Object>
         p.valid = 0xFFFF;
       }
     }
-    
-    return null;
   }
   
   public static String getTypeName(RayPoint.Type type)
@@ -59,8 +58,14 @@ public class OpGenRayPointLayer extends OpGenLayer<Mountain, Object>
     feature.setAttribute(1, getTypeName(p.type));
     feature.setAttribute(2, p.distance);
     feature.setAttribute(3, p.z);
-    feature.setAttribute(4, p.maxZ);
-    feature.setAttribute(5, p.valid);
+    feature.setAttribute(4, toDeg(p.slope));
+    feature.setAttribute(5, toDeg(p.maxSlope));
+    feature.setAttribute(6, p.valid);
     collection.add(feature);
+  }
+  
+  private static double toDeg(double slope)
+  {
+    return Math.toDegrees(Math.atan(slope));
   }
 }
