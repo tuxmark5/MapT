@@ -150,7 +150,6 @@ public class MapPane extends JComponent implements MapLayerListListener, Runnabl
   @Override
   public void layerChanged(MapLayerListEvent mlle)
   {
-    System.out.println("AAX " + mlle.toString());
     invalidateCache();
   }
   

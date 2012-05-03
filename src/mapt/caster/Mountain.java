@@ -35,10 +35,10 @@ public class Mountain
   {
   }
   
-  public void compileRays(double forestHeight)
+  public void compileRays(double forestHeight, double minElevDiff)
   {
     for (Ray r: rays)
-      if (r.compile(forestHeight))
+      if (r.compile(forestHeight, minElevDiff))
         numValidRays++;
     validHydroVisibility = numValidRays > 0; 
   }

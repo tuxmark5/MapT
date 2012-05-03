@@ -43,7 +43,7 @@ public class OpQueryElevation implements Operator<RayPoint, Object>
       else
       {
         //System.out.println("Can't find elevation for point");
-        src.z = 10000.0;
+        src.z = 100.0;
       }
     }
     catch (IOException ex)

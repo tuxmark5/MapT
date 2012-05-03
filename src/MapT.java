@@ -46,8 +46,6 @@ public class MapT
 
 /*
  * TODO:
- *  isvengti 10000 height
- *   minimal height difference parameter
  *   density
  * 
  * 

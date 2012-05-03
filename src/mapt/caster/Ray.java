@@ -38,7 +38,7 @@ public class Ray
     }
   }
   
-  private void checkVisibility()
+  private void checkVisibility(double minElevDiff)
   {
     RayPoint  origin    = points.get(0);
     double    maxSlope  = -Math.sqrt(3.0); // -60 deg
@@ -64,7 +64,7 @@ public class Ray
       
       if (point.type == RayPoint.Type.WATER)
       {
-        if ((point.slope > maxSlope) && ((origin.z - point.z) > 5.0))
+        if ((point.slope > maxSlope) && ((origin.z - point.z) > minElevDiff))
         {
           point.valid = 1;
           valid       = true;
@@ -79,12 +79,12 @@ public class Ray
     }
   }
    
-  public boolean compile(double forestHeight)
+  public boolean compile(double forestHeight, double minElevDiff)
   {
     if (valid) sortByDistance();
     if (valid) interpolateZ();
     if (valid) applyForestModifiers(forestHeight);
-    if (valid) checkVisibility();
+    if (valid) checkVisibility(minElevDiff);
     return valid;
   }
   

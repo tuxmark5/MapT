@@ -9,6 +9,7 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.filter.FilterFactory2;
 
@@ -138,7 +139,7 @@ public class Cartographer implements Runnable
   public void loadLayers() throws IOException
   {
     contourStore        = loadData("data/lt50shp/elev.shp");
-    districtStore       = loadData("data/lt250shp/AdminVien_L.shp");
+    districtStore       = loadData("data/lt200shp/rajonai.shp");
     forestStore         = loadData("data/lt200shp/miskai.shp");
     lakeStore           = loadData("data/lt250shp/Ezerai.shp");
     mountainStore       = loadData("data/lt200shp/virsukal.shp");
@@ -168,6 +169,12 @@ public class Cartographer implements Runnable
     
     stepBegin("Tracing bound contour geometries");
     Mapper.map(mountains,                       new OpTraceContours());
+  }
+  
+  private void processDistricts() throws CQLException, IOException
+  {
+    stepBegin("Filtering mountains according to population density");
+    Mapper.map(getFeatures(districtSource),     new OpFilterMountains(mountains, "PERIMETER > 200000"), null);
   }
   
   private void processForests() throws IOException
@@ -230,7 +237,7 @@ public class Cartographer implements Runnable
   {
     try
     {
-      progressNotifier.taskBegin(22);
+      progressNotifier.taskBegin(24);
       
       // Mountains
       mountains           = new ArrayList<Mountain>();
@@ -238,6 +245,7 @@ public class Cartographer implements Runnable
       stepBegin("Extracting mountain data from mountain shapefile");
       Mapper.map(getFeatures(mountainSource),   new OpExtractMountain(), mountains);
 
+      processDistricts();
       processSettlements();
       processHydros();
       processForests();
@@ -245,7 +253,7 @@ public class Cartographer implements Runnable
       processContours();
 
       stepBegin("Compiling mountain rays");
-      Mapper.map(mountains,                     new OpCompileRays(forestHeight));
+      Mapper.map(mountains,                     new OpCompileRays(forestHeight, minHeightDifference));
 
       raySource           = genRayLayer();
       rayPointSource      = genRayPointLayer();
@@ -259,6 +267,10 @@ public class Cartographer implements Runnable
       System.gc();
       
       progressNotifier.taskEnd("<b>DONE:</b><br/>" + genReport());
+    }
+    catch (CQLException ex)
+    {
+      System.err.println(ex.toString());
     }
     catch (IOException ex)
     {
